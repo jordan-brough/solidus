@@ -17,7 +17,8 @@ namespace 'spree:migrations:copy_order_bill_address_to_credit_card' do
   end
 
   task down: :environment do
-    Spree::CreditCard.update_all(address_id: nil)
+    # we don't know for sure which cards we updated
+    raise ActiveRecord::IrreversibleMigration
   end
 
   def copy_addresses
