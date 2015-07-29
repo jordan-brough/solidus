@@ -28,9 +28,9 @@ namespace 'spree:migrations:copy_order_bill_address_to_credit_card' do
     scope = Spree::CreditCard.where(address_id: nil).includes(payments: :order)
 
     scope.find_in_batches(batch_size: 500) do |credit_card_batch|
-      credit_card_batch.each do |cc|
+      credit_card_batch.each do |credit_card|
         # remove payments that lack a bill address
-        payments = cc.payments.select { |p| p.order.bill_address_id }
+        payments = credit_card.payments.select { |p| p.order.bill_address_id }
 
         payment = payments.sort_by do |p|
           [
@@ -41,7 +41,7 @@ namespace 'spree:migrations:copy_order_bill_address_to_credit_card' do
 
         next if payment.nil?
 
-        cc.update_column(:address_id, payment.order.bill_address_id)
+        credit_card.update_column(:address_id, payment.order.bill_address_id)
       end
     end
   end
