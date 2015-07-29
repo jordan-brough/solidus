@@ -13,18 +13,14 @@ namespace 'spree:migrations:copy_order_bill_address_to_credit_card' do
   task up: :environment do
     say "Copying order bill addresses to credit cards"
 
-    if Spree::CreditCard.connection.adapter_name =~ /postgres/i
-      postgres_copy
-    else
-      ruby_copy
-    end
+    copy_addresses
   end
 
   task down: :environment do
     Spree::CreditCard.update_all(address_id: nil)
   end
 
-  def ruby_copy
+  def copy_addresses
     scope = Spree::CreditCard.where(address_id: nil).includes(payments: :order)
 
     scope.find_in_batches(batch_size: 500) do |credit_card_batch|
@@ -44,76 +40,6 @@ namespace 'spree:migrations:copy_order_bill_address_to_credit_card' do
         credit_card.update_column(:address_id, payment.order.bill_address_id)
       end
     end
-  end
-
-  # This was 20x faster for us but the syntax is postgres-specific. I'm sure
-  # there are equivalent versions for other DBs if someone wants to write them.
-  # I took a quick stab at crafting a cross-db compatible version but it was
-  # slow.
-  def postgres_copy
-    batch_size = 10_000
-
-    say "last id: #{last_credit_card_id}"
-
-    current_start_id = 1
-
-    while current_start_id <= last_credit_card_id
-      current_end_id = current_start_id + batch_size
-      say "updating #{current_start_id} to #{current_end_id}"
-
-      # first try to find a valid payment for each credit card
-      Spree::CreditCard.connection.execute(
-        postgres_sql(
-          start_id: current_start_id,
-          end_id: current_end_id,
-          payment_state: "not in ('failed', 'invalid')",
-        )
-      )
-
-      # fall back to using invalid payments for each credit card
-      Spree::CreditCard.connection.execute(
-        postgres_sql(
-          start_id: current_start_id,
-          end_id: current_end_id,
-          payment_state: "in ('failed', 'invalid')",
-        )
-      )
-
-      current_start_id += batch_size
-    end
-  end
-
-  def postgres_sql(start_id:, end_id:, payment_state:)
-    <<-SQL
-      update spree_credit_cards c
-      set address_id = o.bill_address_id
-      from spree_payments p
-      inner join spree_orders o
-        on  o.id = p.order_id
-        and o.bill_address_id is not null
-      left join (
-        select p2.*
-        from spree_payments p2
-        inner join spree_orders o2
-          on  o2.id = p2.order_id
-          and o2.bill_address_id is not null
-      ) more_recent_payment
-        on  more_recent_payment.source_id = p.source_id
-        and more_recent_payment.source_type = 'Spree::CreditCard'
-        and more_recent_payment.created_at > p.created_at
-        and more_recent_payment.state #{payment_state}
-      where c.address_id is null
-        and p.source_id = c.id
-        and p.source_type = 'Spree::CreditCard'
-        and p.state #{payment_state}
-        and more_recent_payment.id is null
-        and o.bill_address_id is not null
-        and c.id between #{start_id} and #{end_id}
-    SQL
-  end
-
-  def last_credit_card_id
-    Spree::CreditCard.last.try!(:id) || 0
   end
 
   def say(message)
