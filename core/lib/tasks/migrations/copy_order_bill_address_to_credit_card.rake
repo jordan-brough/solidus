@@ -23,7 +23,20 @@ namespace 'spree:migrations:copy_order_bill_address_to_credit_card' do
   def copy_addresses
     scope = Spree::CreditCard.where(address_id: nil).includes(payments: :order)
 
-    scope.find_in_batches(batch_size: 500) do |credit_card_batch|
+    start = Time.now
+    batch_start = start
+
+    batch_size = 500
+    batch_iteration = 0
+
+    log_filename = Rails.root.join(
+      "log/copy_order_bill_address_to_credit_card.#{Time.now.to_i}.log"
+    )
+    log = File.open(log_filename, 'w')
+
+    scope.find_in_batches(batch_size: batch_size) do |credit_card_batch|
+      batch_iteration += 1
+
       credit_card_batch.each do |credit_card|
         # remove payments that lack a bill address
         payments = credit_card.payments.select { |p| p.order.bill_address_id }
@@ -38,7 +51,16 @@ namespace 'spree:migrations:copy_order_bill_address_to_credit_card' do
         next if payment.nil?
 
         credit_card.update_column(:address_id, payment.order.bill_address_id)
+
+        if !Rails.env.test?
+          log.puts "credit_card_id=#{credit_card.id} bill_address_id=#{payment.order.bill_address_id}"
+        end
       end
+
+      say "Finished batch of #{batch_size} in #{(Time.now - batch_start).round(1)}s"
+      say "Finished #{batch_size*batch_iteration} records total in #{(Time.now - start).round(1)}s"
+
+      batch_start = Time.now
     end
   end
 
