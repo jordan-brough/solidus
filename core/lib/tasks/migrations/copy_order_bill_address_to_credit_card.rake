@@ -21,7 +21,7 @@ namespace 'spree:migrations:copy_order_bill_address_to_credit_card' do
   end
 
   def copy_addresses
-    scope = Spree::CreditCard.where(address_id: nil).includes(payments: :order)
+    scope = Spree::CreditCard.where(address_id: nil).includes(payments: {order: :bill_address})
 
     start = Time.now
     batch_start = start
@@ -39,7 +39,7 @@ namespace 'spree:migrations:copy_order_bill_address_to_credit_card' do
 
       credit_card_batch.each do |credit_card|
         # remove payments that lack a bill address
-        payments = credit_card.payments.select { |p| p.order.bill_address_id }
+        payments = credit_card.payments.select { |p| p.order.bill_address }
 
         payment = payments.sort_by do |p|
           [
@@ -50,10 +50,13 @@ namespace 'spree:migrations:copy_order_bill_address_to_credit_card' do
 
         next if payment.nil?
 
-        credit_card.update_column(:address_id, payment.order.bill_address_id)
+        address = payment.order.bill_address.dup
+        address.save!
+
+        credit_card.update_columns(address_id: address.id)
 
         if !Rails.env.test?
-          log.puts "credit_card_id=#{credit_card.id} bill_address_id=#{payment.order.bill_address_id}"
+          log.puts "credit_card_id=#{credit_card.id} address_id=#{address.id} bill_address_id=#{payment.order.bill_address_id}"
         end
       end
 
