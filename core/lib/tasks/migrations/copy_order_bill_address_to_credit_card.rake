@@ -27,20 +27,22 @@ namespace 'spree:migrations:copy_order_bill_address_to_credit_card' do
   def ruby_copy
     scope = Spree::CreditCard.where(address_id: nil).includes(payments: :order)
 
-    scope.find_each(batch_size: 500) do |cc|
-      # remove payments that lack a bill address
-      payments = cc.payments.select { |p| p.order.bill_address_id }
+    scope.find_in_batches(batch_size: 500) do |credit_card_batch|
+      credit_card_batch.each do |cc|
+        # remove payments that lack a bill address
+        payments = cc.payments.select { |p| p.order.bill_address_id }
 
-      payment = payments.sort_by do |p|
-        [
-          %w(failed invalid).include?(p.state) ? 0 : 1, # prioritize valid payments
-          p.created_at, # prioritize more recent payments
-        ]
-      end.last
+        payment = payments.sort_by do |p|
+          [
+            %w(failed invalid).include?(p.state) ? 0 : 1, # prioritize valid payments
+            p.created_at, # prioritize more recent payments
+          ]
+        end.last
 
-      next if payment.nil?
+        next if payment.nil?
 
-      cc.update_column(:address_id, payment.order.bill_address_id)
+        cc.update_column(:address_id, payment.order.bill_address_id)
+      end
     end
   end
 
