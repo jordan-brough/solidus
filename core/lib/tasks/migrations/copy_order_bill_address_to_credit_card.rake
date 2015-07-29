@@ -43,7 +43,7 @@ namespace 'spree:migrations:copy_order_bill_address_to_credit_card' do
 
         payments.sort_by! do |p|
           [
-            %w(failed invalid).include?(p.state) ? 0 : 1, # prioritize valid payments
+            payment_state_sort_number(p.state), # prioritize more-valid payments over less-valid payments
             p.created_at, # prioritize more recent payments
           ]
         end
@@ -72,6 +72,22 @@ namespace 'spree:migrations:copy_order_bill_address_to_credit_card' do
 
       batch_start = Time.now
     end
+  end
+
+  def payment_state_sort_number(state)
+    payment_state_sort_hash[state] || -1
+  end
+
+  def payment_state_sort_hash
+    @payment_state_sort_hash ||= {
+      "completed" => 7,
+      "pending" => 6,
+      "processing" => 5,
+      "checkout" => 4,
+      "invalid" => 3,
+      "void" => 2,
+      "failed" => 1,
+    }
   end
 
   def say(message)
