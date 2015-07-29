@@ -41,12 +41,19 @@ namespace 'spree:migrations:copy_order_bill_address_to_credit_card' do
         # remove payments that lack a bill address
         payments = credit_card.payments.select { |p| p.order.bill_address }
 
-        payment = payments.sort_by do |p|
+        payments.sort_by! do |p|
           [
             %w(failed invalid).include?(p.state) ? 0 : 1, # prioritize valid payments
             p.created_at, # prioritize more recent payments
           ]
-        end.last
+        end
+
+        # only call #invalid? as many times as we have to since it requires db lookups
+        while payments.any? && payments.last.order.bill_address.invalid?
+          payments.pop
+        end
+
+        payment = payments.last
 
         next if payment.nil?
 
