@@ -81,7 +81,7 @@ describe "Checkout", type: :feature, inaccessible: true do
     before(:each) do
       order = OrderWalkthrough.up_to(:delivery)
       allow(order).to receive_messages :confirmation_required? => true
-      allow(order).to receive_messages(:available_payment_methods => [ create(:credit_card_payment_method, :environment => 'test') ])
+      allow(order).to receive_messages(:available_payment_methods => [ create(:credit_card_payment_method) ])
 
       user = create(:user)
       order.user = user
@@ -149,8 +149,8 @@ describe "Checkout", type: :feature, inaccessible: true do
   end
 
   context "when several payment methods are available" do
-    let(:credit_cart_payment) {create(:credit_card_payment_method, :environment => 'test') }
-    let(:check_payment) {create(:check_payment_method, :environment => 'test') }
+    let(:credit_cart_payment) {create(:credit_card_payment_method) }
+    let(:check_payment) {create(:check_payment_method) }
 
     after do
       Capybara.ignore_hidden_elements = true
