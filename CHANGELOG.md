@@ -1,5 +1,11 @@
 ## Solidus 1.0
 
+*   Remove PaymentMethod#environment
+
+    Issue https://github.com/solidusio/solidus/pull/248
+
+    *Clarke Brunsdon*
+
 *   Replace ShipmentMailer with CartonMailer
 
     IMPORTANT: Appliction and extension code targeting ShipmentMailer needs to
