@@ -22,15 +22,25 @@ describe Spree::PaymentMethod, :type => :model do
     end
 
     it "should return all methods available to front-end/back-end when display_on = :both" do
-      expect(Spree::PaymentMethod.available(:both).size).to eq(2)
+      expect(Spree::PaymentMethod.available(display_on: :both).size).to eq(2)
     end
 
     it "should return all methods available to front-end when display_on = :front_end" do
-      expect(Spree::PaymentMethod.available(:front_end).size).to eq(2)
+      expect(Spree::PaymentMethod.available(display_on: :front_end).size).to eq(2)
     end
 
     it "should return all methods available to back-end when display_on = :back_end" do
-      expect(Spree::PaymentMethod.available(:back_end).size).to eq(2)
+      expect(Spree::PaymentMethod.available(display_on: :back_end).size).to eq(2)
+    end
+
+    context "respects extra conditions" do
+      before(:each) do
+        allow(Spree::PaymentMethod).to receive(:available_extra_conditions).and_return(-> (payment_method, options) { false })
+      end
+
+      it "returns no available methods" do
+        expect(Spree::PaymentMethod.available(display_on: :back_end).size).to eq(0)
+      end
     end
   end
 
