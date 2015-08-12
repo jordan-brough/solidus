@@ -9,6 +9,15 @@ module Spree
     has_many :payments, class_name: "Spree::Payment", inverse_of: :payment_method
     has_many :credit_cards, class_name: "Spree::CreditCard"
 
+    # Extension point to add extra conditions to {available}. For a payment method
+    # to be deemed available, both the standard conditions in {available} and the
+    # result of calling this must be true. Is passed a {PaymentMethod} and the
+    # options hash passed to {#available}.
+    #
+    # @api public
+    class_attribute :available_extra_conditions
+    self.available_extra_conditions = -> (payment_method, options) { true }
+
     include Spree::Preferences::StaticallyConfigurable
 
     def self.providers
@@ -26,10 +35,16 @@ module Spree
       raise ::NotImplementedError, "You must implement payment_source_class method for #{self.class}."
     end
 
-    def self.available(display_on = 'both')
+    def self.available(options = {})
+      unless options.is_a?(Hash)
+        ActiveSupport::Deprecation.warn("This method now takes an options hash as an argument (e.g. { display_on: 'both' }")
+        options = { display_on: options }
+      end
+      options[:display_on] ||= 'both'
       all.select do |p|
         p.active &&
-        (p.display_on == display_on.to_s || p.display_on.blank?)
+        (p.display_on == options[:display_on].to_s || p.display_on.blank?) &&
+        self.available_extra_conditions.call(p, options)
       end
     end
 
