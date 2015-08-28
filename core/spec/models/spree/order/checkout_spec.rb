@@ -771,7 +771,7 @@ describe Spree::Order, :type => :model do
         expect_any_instance_of(Spree::Payment).to(
           receive(:request_env=).with({'USER_AGENT' => 'Firefox'}).and_call_original
         )
-        order.update_from_params(params, request_env: {'USER_AGENT' => 'Firefox'})
+        order.update_from_params(params, nil, {'USER_AGENT' => 'Firefox'})
       end
     end
 
@@ -779,6 +779,10 @@ describe Spree::Order, :type => :model do
       it 'succeeds' do
         expect(order.update_from_params({})).to be_truthy
       end
+    end
+
+    context 'with deprecated permitted_params usage' do
+      # TODO
     end
   end
 

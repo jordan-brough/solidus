@@ -2,6 +2,9 @@ require 'spec_helper'
 
 class FakeController < ApplicationController
   include Spree::Core::ControllerHelpers::PaymentParameters
+
+  public :move_payment_source_into_payments_attributes
+  public :move_existing_card_into_payments_attributes
 end
 
 describe Spree::Core::ControllerHelpers::PaymentParameters, type: :controller do

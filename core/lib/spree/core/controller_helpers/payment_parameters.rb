@@ -1,5 +1,10 @@
 module Spree
   module Core::ControllerHelpers::PaymentParameters
+
+    # Temporarily also providing these as module functions to supported
+    # deprecated model-level usage for now.
+    module_function
+
     # This method handles the awkwardness of how the html forms are currently
     # set up for frontend.
     #

@@ -234,7 +234,12 @@ module Spree
             checkout_step_index(state) > checkout_step_index(self.state)
           end
 
-          def update_from_params(attributes, request_env: {})
+          def update_from_params(attributes, permitted_params = nil, request_env = {})
+            if permitted_params
+              ActiveSupport::Deprecation.warn("Passing permitted_params is deprecated. Prepare and filter parameters before calling update_from_params.", caller)
+              attributes = massage_deprecated_params(attributes)
+            end
+
             if attributes[:payments_attributes]
               attributes[:payments_attributes].each do |payment_attributes|
                 payment_attributes[:request_env] = request_env
@@ -293,6 +298,17 @@ module Spree
           end
 
           private
+
+          # TODO: Remove this when the deprecated code in update_from_params is removed
+          def massage_deprecated_params(params)
+            massaged_params = params.deep_dup
+
+            Core::ControllerHelpers::PaymentParameters.move_payment_source_into_payments_attributes(massaged_params)
+            Core::ControllerHelpers::PaymentParameters.move_existing_card_into_payments_attributes(massaged_params)
+            Core::ControllerHelpers::PaymentParameters.set_payment_parameters_amount(massaged_params)
+
+            massaged_params
+          end
 
           def process_payments_before_complete
             return if !payment_required?
