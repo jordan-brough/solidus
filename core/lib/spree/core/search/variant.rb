@@ -12,6 +12,9 @@ module Spree
           :option_values_name_cont,
         ]
 
+        class_attribute :search_term_filter
+        self.search_term_filter = ->(word, terms) { terms } # default filter dosen't filter anything
+
         def initialize(query_string, scope: Spree::Variant.all)
           @query_string = query_string
           @scope = scope
@@ -28,7 +31,7 @@ module Spree
           return @scope if @query_string.blank?
 
           matches = @query_string.split.map do |word|
-            @scope.ransack(search_terms(word)).result.pluck(:id)
+            @scope.ransack(search_term_params(word)).result.pluck(:id)
           end
 
           Spree::Variant.where(id: matches.inject(:&))
@@ -36,8 +39,12 @@ module Spree
 
         private
 
-        def search_terms(word)
-          terms = Hash[self.class.search_terms.map { |t| [t, word] }]
+        def search_terms(word, terms)
+          self.class.search_term_filter.call(word, terms)
+        end
+
+        def search_term_params(word)
+          terms = Hash[search_terms(word, self.class.search_terms).map { |t| [t, word] }]
           terms.merge(m: 'or')
         end
       end

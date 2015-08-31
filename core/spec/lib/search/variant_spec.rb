@@ -88,5 +88,30 @@ module Spree
         it { assert_found("5000", variant) }
       end
     end
+
+    describe '.search_term_filter' do
+      let(:filter) do
+        ->(word, terms) do
+          if word =~ /\A\d+\z/
+            described_class.search_terms
+          else
+            described_class.search_terms - [:sku_cont]
+          end
+        end
+      end
+
+      around do |example|
+        previous_search_term_filter = described_class.search_term_filter
+        described_class.search_term_filter = filter
+        example.run
+        described_class.search_term_filter = previous_search_term_filter
+      end
+
+      let!(:numeric_sku_variant) { FactoryGirl.create(:variant, product: product, sku: "123") }
+      let!(:non_numeric_sku_variant) { FactoryGirl.create(:variant, product: product, sku: "abc") }
+
+      it { expect(described_class.new('123').results).to include numeric_sku_variant }
+      it { expect(described_class.new('abc').results).not_to include non_numeric_sku_variant }
+    end
   end
 end
