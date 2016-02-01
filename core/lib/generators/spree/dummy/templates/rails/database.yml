@@ -31,7 +31,7 @@ production:
 development:
   adapter: postgresql
   database: <%= database_prefix %><%= options[:lib_name] %>_spree_development
-  username: postgres
+  username: jordan
   min_messages: warning
 <% unless db_host.blank? %>
   host: <%= db_host %>
@@ -39,7 +39,7 @@ development:
 test:
   adapter: postgresql
   database: <%= database_prefix %><%= options[:lib_name] %>_spree_test
-  username: postgres
+  username: jordan
   min_messages: warning
 <% unless db_host.blank? %>
   host: <%= db_host %>
@@ -47,7 +47,7 @@ test:
 production:
   adapter: postgresql
   database: <%= database_prefix %><%= options[:lib_name] %>_spree_production
-  username: postgres
+  username: jordan
   min_messages: warning
 <% unless db_host.blank? %>
   host: <%= db_host %>

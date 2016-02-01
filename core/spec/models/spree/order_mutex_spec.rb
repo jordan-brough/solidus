@@ -69,7 +69,7 @@ describe Spree::OrderMutex do
     end
   end
 
-  if Spree::OrderMutex.connection.adapter_name !~ /sqlite/i
+  if Spree::OrderMutex::Model.connection.adapter_name !~ /sqlite/i
     context 'when locked inside a larger transaction in a different database connection' do
       it 'fails immediately rather than blocking' do
         # We set up a test where an OrderMutex is obtained inside of a larger
