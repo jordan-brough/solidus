@@ -30,7 +30,9 @@ module Spree
     #     cleaned up by the deafult transaction that wraps all spec DB
     #     modifications. However, the "ensure" clause in this code should take
     #     care of cleanup in almost all cases.
-    establish_connection(connection_config)
+    if connection.adapter_name !~ /sqlite/i
+      establish_connection(connection_config)
+    end
 
     class LockFailed < StandardError; end
 
