@@ -69,6 +69,46 @@ describe Spree::OrderMutex do
     end
   end
 
+  context 'when locked inside a larger transaction in a different database connection' do
+    it 'fails immediately rather than blocking' do
+      # We set up a test where an OrderMutex is obtained inside of a larger
+      # transaction and then holds the lock while a second connection tries to
+      # obtain the lock.  We want the second connection to fail immediately
+      # rather than waiting for the larger transaction (on the first connection)
+      # to finish.
+      queue_1 = Queue.new
+      queue_2 = Queue.new
+
+      thread_1 = Thread.new do
+        ActiveRecord::Base.transaction do
+          Spree::OrderMutex.with_lock!(order) do
+            # tell thread_2 to attempt the lock
+            queue_2 << 'locked'
+            Timeout.timeout(1) do
+              # wait for thread_2 to finish failing the lock attempt
+              (msg = queue_1.shift) && msg == 'done' || raise("wrong message: #{msg}")
+            end
+          end
+        end
+      end
+
+      thread_2 = Thread.new do
+        # wait for thread_1 to obtain the lock
+        (msg = queue_2.shift) && msg == 'locked' || raise("wrong message: #{msg}")
+        expect {
+          Timeout.timeout(1) do
+            Spree::OrderMutex.with_lock!(order)
+          end
+        }.to raise_error(Spree::OrderMutex::LockFailed)
+        # let thread_1 know it can release the lock
+        queue_1 << 'done'
+      end
+
+      thread_1.join
+      thread_2.join
+    end
+  end
+
   context "when an unrelated RecordNotUnique error occurs" do
     def raise_record_not_unique
       raise ActiveRecord::RecordNotUnique.new("Testing")
