@@ -18,7 +18,9 @@ describe Spree::OrderMutex do
     end
 
     it "returns the value of the block" do
-      expect(Spree::OrderMutex.with_lock!(order) { 'yay for spree' }).to eq 'yay for spree'
+      expect(
+        Spree::OrderMutex.with_lock!(order) { 'yay for solidus' }
+      ).to eq('yay for solidus')
     end
   end
 
@@ -69,7 +71,7 @@ describe Spree::OrderMutex do
     end
   end
 
-  if Spree::OrderMutex::Model.connection.adapter_name !~ /sqlite/i
+  if Spree::OrderMutex::DatabaseLocker.connection.adapter_name !~ /sqlite/i
     context 'when locked inside a larger transaction in a different database connection' do
       it 'fails immediately rather than blocking' do
         # We set up a test where an OrderMutex is obtained inside of a larger

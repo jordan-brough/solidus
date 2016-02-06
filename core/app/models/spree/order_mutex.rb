@@ -7,31 +7,25 @@ module Spree
       end
     end
 
-    # 'locker' should be an object that responds to 'lock(order)'. If a lock is
-    # obtained then the method should yield, return the yielded value and then
-    # release the lock. Otherwise it should raise a
-    # Spree::OrderMutex::LockFailed error. Any locks older than
-    # Spree::Config[:order_mutex_max_age] should be ignored or automatically
-    # removed.
+    # 'locker' should be an object that responds to 'lock(order)' and acquires
+    # an exclusive lock on an Order.
+    # If the locker obtains the lock it should yield, return the yielded value
+    # and then release the lock.
+    # If the locker fails to obtain a lock it should raise a
+    # Spree::OrderMutex::LockFailed error.
+    # Any locks older than Spree::Config[:order_mutex_max_age] should be ignored
+    # and/or automatically removed.
     class_attribute :locker
-    self.locker = Spree::OrderMutex::Model
+    self.locker = Spree::OrderMutex::DatabaseLocker
 
     class << self
       # Obtain a lock on an order.  If the lock is obtained, yield and return
-      # the yielded value and then release the lock.  Otherwise raise a
-      # LockFailed error. We raise instead of blocking to avoid tying up
-      # multiple server processes waiting for the lock. Locks older than
-      # Spree::Config[:order_mutex_max_age] are ignored.
+      # the yielded value and then release the lock.
       def with_lock!(order)
         raise ArgumentError, "order must be supplied" if order.nil?
 
         locker.lock(order) do
-          begin
-            yield
-          rescue Spree::OrderMutex::LockFailed => e
-            Rails.logger.error(e.inspect)
-            raise
-          end
+          yield
         end
       end
     end
