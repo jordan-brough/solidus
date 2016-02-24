@@ -1,6 +1,10 @@
 require 'spec_helper'
 
 describe Spree::TaxRate, type: :model do
+  subject(:tax_rate) { described_class.new }
+
+  it { is_expected.to respond_to(:shipping_rate_taxes) }
+
   context ".for_zone" do
     subject(:rates_for_zone) { Spree::TaxRate.for_zone(zone) }
 
