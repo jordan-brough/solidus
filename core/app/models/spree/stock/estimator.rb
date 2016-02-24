@@ -50,7 +50,7 @@ module Spree
             rate.tax_rate = tax_rate if tax_rate
           end
 
-          rate
+          Spree::Tax::ShippingRateTaxer.new.tax(rate)
         end.compact
       end
 
