@@ -4,8 +4,9 @@ module Spree
   module Stock
     describe Estimator, type: :model do
       let(:shipping_rate) { 4.00 }
+      let(:shipment) { create(:shipment, shipping_method: shipping_method, order: order) }
       let!(:shipping_method) { create(:shipping_method, cost: shipping_rate, currency: currency) }
-      let(:package) { build(:stock_package, contents: inventory_units.map { |i| ContentItem.new(i) }) }
+      let(:package) { build(:stock_package, contents: inventory_units.map { |i| ContentItem.new(i) }, shipment: shipment) }
       let(:order) { create(:order_with_line_items, shipping_method: shipping_method) }
       let(:inventory_units) { order.inventory_units }
 
