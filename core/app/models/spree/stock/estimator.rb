@@ -38,7 +38,7 @@ module Spree
 
           if cost
             rate = shipping_method.shipping_rates.new(cost: cost, order: order)
-            Spree::Tax::ShippingRateTaxer.new.tax(rate)
+            Spree::Config.shipping_rate_taxer_class.new.tax(rate)
           end
         end.compact
       end
