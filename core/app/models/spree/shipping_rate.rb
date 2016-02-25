@@ -4,7 +4,7 @@ module Spree
 
     belongs_to :shipment, class_name: 'Spree::Shipment'
     belongs_to :shipping_method, -> { with_deleted }, class_name: 'Spree::ShippingMethod', inverse_of: :shipping_rates
-    belongs_to :tax_rate, -> { with_deleted }, class_name: 'Spree::TaxRate'
+
     has_many :taxes,
              class_name: "Spree::ShippingRateTax",
              foreign_key: "shipping_rate_id",
@@ -25,10 +25,6 @@ module Spree
       @order || shipment_order
     end
 
-    def calculate_tax_amount
-      tax_rate.compute_amount(self)
-    end
-
     def display_price
       price = display_amount.to_s
 
@@ -42,10 +38,6 @@ module Spree
                explanations: tax_explanations
     end
     alias_method :display_cost, :display_price
-
-    def display_tax_amount(tax_amount)
-      Spree::Money.new(tax_amount, currency: currency)
-    end
 
     private
 
