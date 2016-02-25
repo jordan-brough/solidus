@@ -1,5 +1,7 @@
 module Spree
   class ShippingRate < Spree::Base
+    attr_writer :order
+
     belongs_to :shipment, class_name: 'Spree::Shipment'
     belongs_to :shipping_method, -> { with_deleted }, class_name: 'Spree::ShippingMethod', inverse_of: :shipping_rates
     belongs_to :tax_rate, -> { with_deleted }, class_name: 'Spree::TaxRate'
@@ -8,7 +10,8 @@ module Spree
              foreign_key: "shipping_rate_id",
              dependent: :destroy
 
-    delegate :order, :currency, to: :shipment
+    delegate :currency, to: :shipment
+    delegate :order, to: :shipment, prefix: true
     delegate :name, :tax_category, to: :shipping_method
     delegate :code, to: :shipping_method, prefix: true
     alias_attribute :amount, :cost
@@ -17,6 +20,10 @@ module Spree
 
     extend DisplayMoney
     money_methods :amount
+
+    def order
+      @order || shipment_order
+    end
 
     def calculate_tax_amount
       tax_rate.compute_amount(self)

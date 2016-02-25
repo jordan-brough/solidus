@@ -131,7 +131,7 @@ module Spree
         end
 
         it 'uses the configured shipping rate selector' do
-          shipping_rate = Spree::ShippingRate.new
+          shipping_rate = Spree::ShippingRate.new(order: Spree::Order.new)
           allow(Spree::ShippingRate).to receive(:new).and_return(shipping_rate)
 
           selector_class = Class.new do
