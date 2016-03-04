@@ -22,6 +22,15 @@ module Spree
           subject.shipments
         end
 
+        it 'connects the shipment before calling the estimator' do
+          expect_any_instance_of(Spree::Config.stock.estimator_class).to(
+            receive(:shipping_rates).and_call_original { |package|
+              expect(package.shipment).to be_present
+            }
+          )
+          subject.shipments
+        end
+
         it 'builds shipments' do
           expect(subject.shipments.size).to eq(1)
         end
