@@ -1,5 +1,15 @@
 ## Solidus 1.3.0 (unreleased)
 
+*   Changes to Spree::Stock::Estimator
+
+    * The package passed to Spree::Stock::Estimator#shipping_rates must have its
+      shipment assigned and that shipment must have its order assigned. This
+      is needed for some upcoming tax work in to calculate taxes correctly.
+    * Spree::Stock::Estimator.new no longer accepts an order argument. The order
+      will be fetched from the shipment.
+
+    https://github.com/solidusio/solidus/pull/965
+
 *   Removed Spree::Stock::Coordinator#packages from the public interface.
 
     This will allow us to refactor more easily.
