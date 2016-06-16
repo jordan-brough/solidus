@@ -419,6 +419,57 @@ module Spree
         expect_any_instance_of(PromotionHandler::Coupon).to receive(:apply).and_return({ coupon_applied?: true })
         api_put :update, id: order.to_param, order_token: order.guest_token, order: { coupon_code: "foobar" }
       end
+
+      describe 'tax recalculation' do
+        let!(:utah_tax_rate) { create(:tax_rate, amount: 0.1, zone: utah_zone, tax_category: tax_category) }
+        let!(:iowa_tax_rate) { create(:tax_rate, amount: 0.2, zone: iowa_zone, tax_category: tax_category) }
+
+        let(:utah_zone) { create(:zone, zone_members: [], states: [utah]) }
+        let(:iowa_zone) { create(:zone, zone_members: [], states: [iowa]) }
+
+        let(:utah) { create(:state, state_code: 'UT') }
+        let(:iowa) { create(:state, state_code: 'IA') }
+
+        let(:utah_address) { create(:address, state: utah) }
+        let(:iowa_address) { create(:address, state: iowa) }
+
+        let(:tax_category) { order.line_items.first!.tax_category }
+
+        context 'when the tax should change' do
+          let(:order) do
+            create(
+              :order_with_line_items,
+              ship_address: utah_address,
+              line_items_count: 1,
+              line_items_price: 10,
+              shipment_cost: 0,
+              shipping_method: create(:shipping_method, cost: 0),
+            )
+          end
+
+          before do
+            Spree::Tax::OrderAdjuster.new(order).adjust!
+            order.update!
+          end
+
+          it 'updates the tax' do
+            expect(order.additional_tax_total).to eq(1)
+
+            api_put(
+              :update,
+              id: order.to_param,
+              order_token: order.guest_token,
+              order: {
+                ship_address_attributes: iowa_address.attributes,
+              },
+            )
+            order.reload
+
+            expect(response.code).to eq('200')
+            expect(order.additional_tax_total).to eq(2)
+          end
+        end
+      end
     end
 
     context "PUT 'next'" do
