@@ -15,7 +15,12 @@ module Spree
     end
 
     def show
-      @variants = @product.variants_including_master.active(current_currency).includes([:option_values, :images])
+      @variants = @product.
+        variants_including_master.
+        display_includes.
+        with_prices(current_pricing_options).
+        includes([:option_values, :images])
+
       @product_properties = @product.product_properties.includes(:property)
       @taxon = Spree::Taxon.find(params[:taxon_id]) if params[:taxon_id]
     end
@@ -34,7 +39,7 @@ module Spree
       if try_spree_current_user.try(:has_spree_role?, "admin")
         @products = Product.with_deleted
       else
-        @products = Product.active(current_currency)
+        @products = Product.available
       end
       @product = @products.friendly.find(params[:id])
     end

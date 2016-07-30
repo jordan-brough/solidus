@@ -49,7 +49,7 @@ module Spree
     def self.const_missing(name)
       case name
       when :AdjustmentSource, :CalculatedAdjustments, :UserAddress, :UserPaymentSource
-        ActiveSupport::Deprecation.warn("Spree::Core::#{name} is deprecated! Use Spree::#{name} instead.", caller)
+        Spree::Deprecation.warn("Spree::Core::#{name} is deprecated! Use Spree::#{name} instead.", caller)
         Spree.const_get(name)
       else
         super
@@ -63,11 +63,13 @@ end
 
 require 'spree/core/version'
 
+require 'spree/core/class_constantizer'
 require 'spree/core/environment_extension'
 require 'spree/core/environment/calculators'
 require 'spree/core/environment'
 require 'spree/promo/environment'
 require 'spree/migrations'
+require 'spree/migration_helpers'
 require 'spree/core/engine'
 
 require 'spree/i18n'
@@ -97,3 +99,6 @@ require 'spree/deprecation'
 
 require 'spree/mailer_previews/order_preview'
 require 'spree/mailer_previews/carton_preview'
+require 'spree/mailer_previews/reimbursement_preview'
+
+require 'spree/core/price_migrator'

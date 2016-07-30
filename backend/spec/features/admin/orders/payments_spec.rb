@@ -66,17 +66,17 @@ describe 'Payments', type: :feature do
       within_row(1) do
         expect(column_text(3)).to eq('$150.00')
         expect(column_text(4)).to eq('Credit Card')
-        expect(column_text(6)).to eq('CHECKOUT')
+        expect(column_text(6)).to eq('checkout')
       end
 
       click_icon :void
-      expect(page).to have_css('#payment_status', text: 'BALANCE DUE')
+      expect(page).to have_css('#payment_status', text: 'balance due')
       expect(page).to have_content('Payment Updated')
 
       within_row(1) do
         expect(column_text(3)).to eq('$150.00')
         expect(column_text(4)).to eq('Credit Card')
-        expect(column_text(6)).to eq('VOID')
+        expect(column_text(6)).to eq('void')
       end
 
       click_on 'New Payment'
@@ -86,7 +86,7 @@ describe 'Payments', type: :feature do
 
       click_icon(:capture)
 
-      expect(page).to have_selector('#payment_status', text: 'PAID')
+      expect(page).to have_selector('#payment_status', text: 'paid')
       expect(page).not_to have_selector('#new_payment_section')
     end
 
@@ -221,6 +221,51 @@ describe 'Payments', type: :feature do
         click_icon(:capture)
         expect(page).to have_content("Payment Updated")
       end
+    end
+
+    context 'with a soft-deleted payment method' do
+      let(:order) { create(:completed_order_with_totals, line_items_count: 1) }
+      let!(:payment_method) { create(:check_payment_method) }
+      let!(:payment) do
+        create(:payment,
+          order:          order,
+          amount:         order.outstanding_balance,
+          payment_method: payment_method
+        )
+      end
+
+      before do
+        payment_method.destroy
+        visit spree.admin_order_payments_path(order.reload)
+      end
+
+      it "can list and view the payment" do
+        expect(page).to have_content(payment.number)
+        click_on payment.number
+        expect(page).to have_current_path("/admin/orders/#{order.number}/payments/#{payment.id}")
+        expect(page).to have_content(payment.amount)
+      end
+    end
+  end
+
+  # Previously this would fail unless the method was named "Credit Card"
+  context "with an differently named payment method" do
+    let(:order) { create(:order_with_line_items, line_items_count: 1) }
+    let!(:chequing_payment_method) { create(:check_payment_method) }
+    let!(:payment_method) { create(:credit_card_payment_method, name: "Multipass!") }
+
+    before do
+      visit spree.admin_order_payments_path(order.reload)
+    end
+
+    it "is able to create a new payment", js: true do
+      choose payment_method.name
+      fill_in "Card Number", with: "4111 1111 1111 1111"
+      fill_in "Name", with: "Test User"
+      fill_in "Expiration", with: "09 / #{Time.current.year + 1}"
+      fill_in "Card Code", with: "007"
+      click_button "Continue"
+      expect(page).to have_content("Payment has been successfully created!")
     end
   end
 end

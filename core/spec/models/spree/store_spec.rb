@@ -16,40 +16,63 @@ describe Spree::Store, type: :model do
   end
 
   describe '.current' do
-    # there is a default store created with the test_app rake task.
-    let!(:store_1) { Spree::Store.first || create(:store) }
-
+    let!(:store_1) { create(:store) }
+    let!(:store_default) { create(:store, name: 'default', default: true) }
     let!(:store_2) { create(:store, default: false, url: 'www.subdomain.com') }
     let!(:store_3) { create(:store, default: false, url: 'www.another.com', code: 'CODE') }
 
-    it 'should return default when no domain' do
-      expect(subject.class.current).to eql(store_1)
+    delegate :current, to: :described_class
+
+    context "with no argument" do
+      it 'should return default' do
+        Spree::Deprecation.silence do
+          expect(current).to eql(store_default)
+        end
+      end
     end
 
-    it 'should return store for domain' do
-      expect(subject.class.current('spreecommerce.com')).to eql(store_1)
-      expect(subject.class.current('www.subdomain.com')).to eql(store_2)
+    context "with no match" do
+      it 'should return the default domain' do
+        expect(current('foobar.com')).to eql(store_default)
+      end
     end
 
-    it 'should return store by code' do
-      expect(subject.class.current('CODE')).to eql(store_3)
+    context "with matching url" do
+      it 'should return matching store' do
+        expect(current('www.subdomain.com')).to eql(store_2)
+      end
+    end
+
+    context "with matching code" do
+      it 'should return matching store' do
+        expect(current('CODE')).to eql(store_3)
+      end
     end
   end
 
   describe ".default" do
-    let!(:store)    { create(:store) }
-    let!(:store_2)  { create(:store, default: true) }
+    it "should ensure saved store becomes default if one doesn't exist yet" do
+      expect(Spree::Store.where(default: true).count).to eq(0)
+      store = build(:store)
+      expect(store.default).not_to be true
 
-    it "should ensure there is a default if one doesn't exist yet" do
-      expect(store_2.default).to be true
+      store.save!
+
+      expect(store.default).to be true
     end
 
     it "should ensure there is only one default" do
-      [store, store_2].each(&:reload)
+      orig_default_store = create(:store, default: true)
+      expect(orig_default_store.reload.default).to be true
+
+      new_default_store = create(:store, default: true)
 
       expect(Spree::Store.where(default: true).count).to eq(1)
-      expect(store_2.default).to be true
-      expect(store.default).not_to be true
+
+      [orig_default_store, new_default_store].each(&:reload)
+
+      expect(new_default_store.default).to be true
+      expect(orig_default_store.default).not_to be true
     end
   end
 

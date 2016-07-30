@@ -56,8 +56,37 @@ describe "New Order", type: :feature do
     click_on "ship"
 
     within '.carton-state' do
-      expect(page).to have_content('SHIPPED')
+      expect(page).to have_content('shipped')
     end
+  end
+
+  it 'can create split payments', js: true do
+    click_on 'Cart'
+    select2_search product.name, from: Spree.t(:name_or_sku)
+
+    fill_in_quantity("table.stock-levels", "quantity_0", 2)
+    click_icon :plus
+
+    click_on "Customer"
+
+    within "#select-customer" do
+      targetted_select2_search user.email, from: "#s2id_customer_search"
+    end
+
+    check "order_use_billing"
+    fill_in_address
+    click_on "Update"
+
+    click_on "Payments"
+    fill_in "Amount", with: '10.00'
+    click_on 'Update'
+
+    click_on 'New Payment'
+    fill_in "Amount", with: '29.98'
+    click_on 'Update'
+
+    expect(page).to have_content("$10.00")
+    expect(page).to have_content("$29.98")
   end
 
   context "adding new item to the order", js: true do
@@ -144,7 +173,7 @@ describe "New Order", type: :feature do
       click_on "Continue"
 
       within(".additional-info .state") do
-        expect(page).to have_content("CONFIRM")
+        expect(page).to have_content("confirm")
       end
     end
   end

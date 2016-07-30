@@ -1,4 +1,4 @@
-Spree::Core::Engine.add_routes do
+Spree::Core::Engine.routes.draw do
   namespace :admin do
     get '/search/users', to: "search#users", as: :search_users
     get '/search/products', to: "search#products", as: :search_products
@@ -50,6 +50,7 @@ Spree::Core::Engine.add_routes do
         end
       end
       resources :variants_including_master, only: [:update]
+      resources :prices, only: [:destroy, :index, :edit, :update, :new, :create]
     end
     get '/products/:product_slug/stock', to: "stock_items#index", as: :product_stock
 
@@ -129,11 +130,7 @@ Spree::Core::Engine.add_routes do
       end
     end
 
-    resource :general_settings, only: [:edit, :update] do
-      collection do
-        post :clear_cache
-      end
-    end
+    resource :general_settings, only: [:edit, :update]
 
     resources :return_items, only: [:update]
 

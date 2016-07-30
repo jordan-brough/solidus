@@ -15,6 +15,7 @@ module Spree
     alias_attribute :last_name, :lastname
 
     DB_ONLY_ATTRS = %w(id updated_at created_at)
+    TAXATION_ATTRS = %w(state_id country_id zipcode)
 
     self.whitelisted_ransackable_attributes = %w[firstname lastname]
 
@@ -27,7 +28,7 @@ module Spree
     end
 
     def self.default(user = nil, kind = "bill")
-      ActiveSupport::Deprecation.warn("Address.default is deprecated. Use User.default_address or Address.build_default", caller)
+      Spree::Deprecation.warn("Address.default is deprecated. Use User.default_address or Address.build_default", caller)
       if user
         user.send(:"#{kind}_address") || build_default
       else
@@ -78,6 +79,10 @@ module Spree
       self.class.value_attributes(attributes)
     end
 
+    def taxation_attributes
+      self.class.value_attributes(attributes.slice(*TAXATION_ATTRS))
+    end
+
     # @return [String] the full name on this address
     def full_name
       "#{firstname} #{lastname}".strip
@@ -101,12 +106,12 @@ module Spree
     end
 
     def same_as?(other_address)
-      ActiveSupport::Deprecation.warn("Address.same_as? is deprecated. It's equivalent to Address.==", caller)
+      Spree::Deprecation.warn("Address.same_as? is deprecated. It's equivalent to Address.==", caller)
       self == other_address
     end
 
     def same_as(other_address)
-      ActiveSupport::Deprecation.warn("Address.same_as is deprecated. It's equivalent to Address.==", caller)
+      Spree::Deprecation.warn("Address.same_as is deprecated. It's equivalent to Address.==", caller)
       self == other_address
     end
 

@@ -280,6 +280,28 @@ module Spree
       @searcher_class ||= Spree::Core::Search::Base
     end
 
+    # Allows implementing custom pricing for variants
+    # @!attribute [rw] variant_price_selector_class
+    # @see Spree::Variant::PriceSelector
+    # @return [Class] an object that conforms to the API of
+    #   the standard variant price selector class Spree::Variant::PriceSelector.
+    attr_writer :variant_price_selector_class
+    def variant_price_selector_class
+      @variant_price_selector_class ||= Spree::Variant::PriceSelector
+    end
+
+    # Shortcut for getting the variant price selector's pricing options class
+    #
+    # @return [Class] The pricing options class to be used
+    delegate :pricing_options_class, to: :variant_price_selector_class
+
+    # Shortcut for the default pricing options
+    # @return [variant_price_selector_class] An instance of the pricing options class with default desired
+    #   attributes
+    def default_pricing_options
+      pricing_options_class.new
+    end
+
     attr_writer :variant_search_class
     def variant_search_class
       @variant_search_class ||= Spree::Core::Search::Variant
@@ -387,7 +409,7 @@ module Spree
 
       # support all the old preference methods with a warning
       define_method "preferred_#{old_preference_name}" do
-        ActiveSupport::Deprecation.warn("#{old_preference_name} is no longer supported on Spree::Config, please access it through #{store_method} on Spree::Store", bc.clean(caller))
+        Spree::Deprecation.warn("#{old_preference_name} is no longer supported on Spree::Config, please access it through #{store_method} on Spree::Store", bc.clean(caller))
         Spree::Store.default.send(store_method)
       end
     end

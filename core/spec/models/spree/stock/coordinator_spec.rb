@@ -26,11 +26,6 @@ module Spree
           expect(subject.shipments.size).to eq(1)
         end
 
-        it "puts the order's ship address on the shipments" do
-          shipments = subject.shipments
-          expect(shipments.map(&:address)).to eq [order.ship_address]
-        end
-
         it "builds a shipment for all active stock locations" do
           subject.shipments.count == StockLocation.count
         end
@@ -41,6 +36,15 @@ module Spree
           it "builds shipments only for valid active stock locations" do
             expect(subject.shipments.count).to eq(StockLocation.count - 1)
           end
+        end
+
+        it "does not unintentionally add shipments to the order" do
+          subject.shipments
+          expect {
+            order.update!
+          }.not_to change {
+            order.shipments.count
+          }
         end
       end
 

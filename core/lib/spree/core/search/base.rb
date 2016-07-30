@@ -1,23 +1,36 @@
+require 'spree/deprecation'
+
 module Spree
   module Core
     module Search
       class Base
         attr_accessor :properties
         attr_accessor :current_user
-        attr_accessor :current_currency
+        attr_accessor :pricing_options
 
         def initialize(params)
-          self.current_currency = Spree::Config[:currency]
+          self.pricing_options = Spree::Config.default_pricing_options
           @properties = {}
           prepare(params)
         end
+
+        def current_currency=(currency)
+          self.pricing_options = Spree::Config.pricing_options_class.new(
+            pricing_options.desired_attributes.merge(currency: currency)
+          )
+        end
+
+        def current_currency
+          pricing_options.currency
+        end
+        deprecate :current_currency, :current_currency=, deprecator: Spree::Deprecation
 
         def retrieve_products
           @products = get_base_scope
           curr_page = page || 1
 
           unless Spree::Config.show_products_without_price
-            @products = @products.where("spree_prices.amount IS NOT NULL").where("spree_prices.currency" => current_currency)
+            @products = @products.joins(:prices).merge(Spree::Price.where(pricing_options.search_arguments)).uniq
           end
           @products = @products.page(curr_page).per(per_page)
         end
@@ -33,7 +46,7 @@ module Spree
         protected
 
         def get_base_scope
-          base_scope = Spree::Product.active
+          base_scope = Spree::Product.display_includes.available
           base_scope = base_scope.in_taxon(taxon) unless taxon.blank?
           base_scope = get_products_conditions_for(base_scope, keywords)
           base_scope = add_search_scopes(base_scope)
@@ -57,7 +70,7 @@ module Spree
           # separate queries most of the time but opt for a join as soon as any
           # `where` constraints affecting joined tables are added to the search;
           # which is the case as soon as a taxon is added to the base scope.
-          scope = scope.preload(master: :prices)
+          scope = scope.preload(master: :currently_valid_prices)
           scope = scope.preload(master: :images) if include_images
           scope
         end

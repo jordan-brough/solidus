@@ -19,7 +19,7 @@ gem 'coffee-rails'
 gem 'sass-rails'
 
 group :test do
-  gem 'capybara', '~> 2.4'
+  gem 'capybara', '~> 2.7'
   gem 'capybara-screenshot'
   gem 'database_cleaner', '~> 1.3'
   gem 'email_spec'
@@ -38,7 +38,9 @@ end
 
 group :test, :development do
   gem 'rubocop'
+  gem 'pry'
+
   platforms :mri do
-    gem 'pry-byebug', '~> 1.0'
+    gem 'byebug'
   end
 end

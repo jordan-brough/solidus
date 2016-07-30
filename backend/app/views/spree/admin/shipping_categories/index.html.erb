@@ -1,8 +1,9 @@
 <%= render 'spree/admin/shared/shipping_tabs' %>
 
-<% content_for :page_title do %>
-  <%= Spree::ShippingCategory.model_name.human(count: :other) %>
-<% end %>
+<% admin_breadcrumb(Spree.t(:settings)) %>
+<% admin_breadcrumb(Spree.t('admin.tab.shipping')) %>
+<% admin_breadcrumb(plural_resource_name(Spree::ShippingCategory)) %>
+
 
 <% content_for :page_actions do %>
   <% if can?(:create, Spree::ShippingCategory) %>

@@ -1,6 +1,6 @@
-<% content_for :page_title do %>
-  <%= Spree::Property.model_name.human(count: :other) %>
-<% end %>
+<% admin_breadcrumb(link_to plural_resource_name(Spree::Product), spree.admin_products_path) %>
+<% admin_breadcrumb(plural_resource_name(Spree::Property)) %>
+
 
 <% content_for :page_actions do %>
   <% if can?(:create, Spree::Property) %>

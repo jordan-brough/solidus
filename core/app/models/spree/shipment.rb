@@ -1,7 +1,6 @@
 module Spree
   class Shipment < Spree::Base
     belongs_to :order, class_name: 'Spree::Order', touch: true, inverse_of: :shipments
-    belongs_to :address, class_name: 'Spree::Address'
     belongs_to :stock_location, class_name: 'Spree::StockLocation'
 
     has_many :adjustments, as: :adjustable, inverse_of: :adjustable, dependent: :delete_all
@@ -21,7 +20,6 @@ module Spree
     # from outside of the state machine and can actually pass variables through.
     attr_accessor :special_instructions, :suppress_mailer
 
-    accepts_nested_attributes_for :address
     accepts_nested_attributes_for :inventory_units
 
     make_permalink field: :number, length: 11, prefix: 'H'
@@ -210,8 +208,13 @@ module Spree
     end
 
     def selected_shipping_rate_id=(id)
-      shipping_rates.update_all(selected: false)
-      shipping_rates.update(id, selected: true)
+      selected_shipping_rate.update(selected: false) if selected_shipping_rate
+      new_rate = shipping_rates.detect { |rate| rate.id == id.to_i }
+      fail(
+        ArgumentError,
+        "Could not find shipping rate id #{id} for shipment #{number}"
+      ) unless new_rate
+      new_rate.update(selected: true)
       save!
     end
 
@@ -370,6 +373,11 @@ module Spree
 
     def requires_shipment?
       !stock_location || stock_location.fulfillable?
+    end
+
+    def address
+      ActiveSupport::Deprecation.warn("Calling Shipment#address is deprecated. Use Order#ship_address instead", caller)
+      order.ship_address if order
     end
 
     private

@@ -27,13 +27,18 @@
   </div>
 
   <div class="right four columns omega" data-hook="admin_product_form_right">
-    <div data-hook="admin_product_form_price">
-    <%= f.field_container :price do %>
-      <%= f.label :price, class: 'required' %>
-      <%= f.text_field :price, :value => number_to_currency(@product.price, :unit => ''), :required => true %>
-      <%= f.error_message_on :price %>
-    <% end %>
+    <div data-hook="admin_product_form_price" class="alpha omega four columns">
+      <%= f.field_container :price do %>
+        <%= f.label :price, class: 'required' %>
+        <%= f.text_field :price, :value => number_to_currency(@product.price, :unit => ''), :required => true %>
+        <%= f.error_message_on :price %>
+      <% end %>
     </div>
+
+    <% if show_rebuild_vat_checkbox? %>
+      <%= render "spree/admin/shared/rebuild_vat_prices_checkbox", form: f, model_name: "product", wrapper_class: "alpha omega field four columns" %>
+      <div class="clearfix"></div>
+    <% end %>
 
     <div data-hook="admin_product_form_cost_price" class="alpha two columns">
       <%= f.field_container :cost_price do %>
@@ -66,6 +71,7 @@
         <%= f.label :promotionable do %>
           <%= f.check_box :promotionable %> <%= Spree::Product.human_attribute_name(:promotionable) %>
         <% end %>
+        <%= f.field_hint :promotionable %>
       <% end %>
     </div>
 
@@ -76,7 +82,7 @@
           <%= Spree.t(:info_product_has_multiple_skus, count: @product.variants.count) %>
           <ul class="text_list">
             <% @product.variants.first(5).each do |variant| %>
-              <li><%= variant.sku %></li>
+              <li><%= link_to variant.sku, spree.edit_admin_product_variant_path(@product, variant) %></li>
             <% end %>
           </ul>
           <% if @product.variants.count > 5 %>
@@ -98,28 +104,19 @@
       </div>
 
       <div id="shipping_specs">
-        <div id="shipping_specs_height_field" data-hook="admin_product_form_height" class="field alpha two columns">
-          <%= f.label :height %>
-          <%= f.text_field :height, :size => 4 %>
-        </div>
-        <div id="shipping_specs_width_field" data-hook="admin_product_form_width" class="field omega two columns">
-          <%= f.label :width %>
-          <%= f.text_field :width, :size => 4 %>
-        </div>
-        <div id="shipping_specs_depth_field" data-hook="admin_product_form_depth" class="field alpha two columns">
-          <%= f.label :depth %>
-          <%= f.text_field :depth, :size => 4 %>
-        </div>
-        <div id="shipping_specs_weight_field" data-hook="admin_product_form_weight" class="field omega two columns">
-          <%= f.label :weight %>
-          <%= f.text_field :weight, :size => 4 %>
-        </div>
+        <% [:height, :width, :depth, :weight].each_with_index do |field, index| %>
+          <div id="shipping_specs_<%= field %>_field" class="field two columns <%= index.even? ? 'alpha' : 'omega' %>">
+            <%= f.label field %>
+            <%= f.text_field field, value: number_with_precision(@product.send(field), precision: 2) %>
+          </div>
+        <% end %>
       </div>
     <% end %>
 
     <div data-hook="admin_product_form_shipping_categories">
       <%= f.field_container :shipping_categories do %>
         <%= f.label :shipping_category_id, Spree::ShippingCategory.model_name.human %>
+        <%= f.field_hint :shipping_category %>
         <%= f.collection_select(:shipping_category_id, @shipping_categories, :id, :name, { :include_blank => Spree.t('match_choices.none') }, { :class => 'select2' }) %>
         <%= f.error_message_on :shipping_category %>
       <% end %>
@@ -128,6 +125,7 @@
     <div data-hook="admin_product_form_tax_category">
       <%= f.field_container :tax_category do %>
         <%= f.label :tax_category_id, Spree::TaxCategory.model_name.human %>
+        <%= f.field_hint :tax_category %>
         <%= f.collection_select(:tax_category_id, @tax_categories, :id, :name, { :include_blank => Spree.t('match_choices.none') }, { :class => 'select2' }) %>
         <%= f.error_message_on :tax_category %>
       <% end %>
@@ -137,14 +135,14 @@
   <div class="twelve columns alpha omega">
     <div data-hook="admin_product_form_taxons">
       <%= f.field_container :taxons do %>
-        <%= f.label :taxon_ids, Spree::Taxon.model_name.human(count: :other) %><br />
+        <%= f.label :taxon_ids, plural_resource_name(Spree::Taxon) %><br />
         <%= f.hidden_field :taxon_ids, :value => @product.taxon_ids.join(',') %>
       <% end %>
     </div>
 
     <div data-hook="admin_product_form_option_types">
       <%= f.field_container :option_types do %>
-        <%= f.label :option_type_ids, Spree::OptionType.model_name.human(count: :other) %>
+        <%= f.label :option_type_ids, plural_resource_name(Spree::OptionType) %>
         <%= f.hidden_field :option_type_ids, :value => @product.option_type_ids.join(',') %>
       <% end %>
     </div>

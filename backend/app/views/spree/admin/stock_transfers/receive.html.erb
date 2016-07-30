@@ -1,6 +1,5 @@
-<% content_for :page_title do %>
-  <%= "#{Spree.t(:receiving)} #{@stock_transfer.number}" %>
-<% end %>
+<% admin_breadcrumb("#{Spree.t(:receiving)} #{@stock_transfer.number}") %>
+
 
 <% content_for :page_actions do %>
   <li>
@@ -16,13 +15,7 @@
 <% end %>
 
 <div id='stock_transfer_summary' class='fullwidth'>
-  <div class='location'>
-    <span class='summary-field'>From:</span>
-    <span><%= @stock_transfer.source_location.admin_name %></span>
-    <span class='arrow'>&rarr;</span>
-    <span class='summary-field'>To:</span>
-    <span><%= @stock_transfer.destination_location.admin_name %></span>
-  </div>
+  <%= render 'spree/admin/stock_transfers/location', stock_transfer: @stock_transfer %>
   <div class='count-summary'>
     <span id='total-received-quantity'><%= @stock_transfer.received_item_count %></span>
     /

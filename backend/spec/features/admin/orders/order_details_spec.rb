@@ -2,6 +2,8 @@
 require 'spec_helper'
 
 describe "Order Details", type: :feature, js: true do
+  include OrderFeatureHelper
+
   let!(:stock_location) { create(:stock_location_with_items) }
   let!(:product) { create(:product, name: 'spree t-shirt', price: 20.00) }
   let!(:tote) { create(:product, name: "Tote", price: 15.00) }
@@ -11,7 +13,7 @@ describe "Order Details", type: :feature, js: true do
   let!(:shipping_method) { create(:shipping_method, name: "Default") }
 
   before do
-    order.shipments.create(stock_location_id: stock_location.id)
+    @shipment1 = order.shipments.create(stock_location_id: stock_location.id)
     order.contents.add(product.master, 2)
   end
 
@@ -61,7 +63,7 @@ describe "Order Details", type: :feature, js: true do
           end
         end
 
-        expect(page).to have_content("YOUR ORDER IS EMPTY") # wait for page refresh
+        expect(page).to have_content("Your order is empty") # wait for page refresh
         expect(page).not_to have_content("spree t-shirt")
       end
 
@@ -152,7 +154,7 @@ describe "Order Details", type: :feature, js: true do
 
           expect(page).to have_selector('.select2-no-results')
           within(".select2-no-results") do
-            expect(page).to have_content("NO MATCHES FOUND")
+            expect(page).to have_content("No matches found")
           end
         end
       end
@@ -179,8 +181,7 @@ describe "Order Details", type: :feature, js: true do
             expect(order.shipments.first.inventory_units_for(product.master).count).to eq(2)
 
             within_row(1) { click_icon 'arrows-h' }
-            targetted_select2 stock_location2.name, from: '#s2id_item_stock_location'
-            click_icon :ok
+            complete_split_to(stock_location2)
 
             expect(page).to have_css('.shipment', count: 2)
 
@@ -194,11 +195,9 @@ describe "Order Details", type: :feature, js: true do
             expect(order.shipments.first.stock_location.id).to eq(stock_location.id)
 
             within_row(1) { click_icon 'arrows-h' }
-            targetted_select2 stock_location2.name, from: '#s2id_item_stock_location'
-            fill_in 'item_quantity', with: 2
-            click_icon :ok
+            complete_split_to(stock_location2, quantity: 2)
 
-            expect(page).to have_content("PENDING PACKAGE FROM 'CLARKSVILLE'")
+            expect(page).to have_content("pending package from 'Clarksville'")
 
             expect(order.shipments.count).to eq(1)
             expect(order.shipments.last.backordered?).to eq(false)
@@ -210,11 +209,9 @@ describe "Order Details", type: :feature, js: true do
             expect(order.shipments.first.stock_location.id).to eq(stock_location.id)
 
             within_row(1) { click_icon 'arrows-h' }
-            targetted_select2 stock_location2.name, from: '#s2id_item_stock_location'
-            fill_in 'item_quantity', with: 5
-            click_icon :ok
+            complete_split_to(stock_location2, quantity: 5)
 
-            expect(page).to have_content("PENDING PACKAGE FROM 'CLARKSVILLE'")
+            expect(page).to have_content("pending package from 'Clarksville'")
 
             expect(order.shipments.count).to eq(1)
             expect(order.shipments.last.backordered?).to eq(false)
@@ -226,9 +223,7 @@ describe "Order Details", type: :feature, js: true do
             expect(order.shipments.first.stock_location.id).to eq(stock_location.id)
 
             within_row(1) { click_icon 'arrows-h' }
-            targetted_select2 stock_location2.name, from: '#s2id_item_stock_location'
-            fill_in 'item_quantity', with: 'ff'
-            click_icon :ok
+            complete_split_to(stock_location2, quantity: 'ff')
 
             wait_for_ajax
 
@@ -241,9 +236,7 @@ describe "Order Details", type: :feature, js: true do
             expect(order.shipments.first.stock_location.id).to eq(stock_location.id)
 
             within_row(1) { click_icon 'arrows-h' }
-            targetted_select2 stock_location2.name, from: '#s2id_item_stock_location'
-            fill_in 'item_quantity', with: 0
-            click_icon :ok
+            complete_split_to(stock_location2, quantity: 0)
 
             wait_for_ajax
 
@@ -283,9 +276,7 @@ describe "Order Details", type: :feature, js: true do
               product.master.stock_items.last.update_column(:count_on_hand, 0)
 
               within_row(1) { click_icon 'arrows-h' }
-              targetted_select2 stock_location2.name, from: '#s2id_item_stock_location'
-              fill_in 'item_quantity', with: 2
-              click_icon :ok
+              complete_split_to(stock_location2, quantity: 2)
 
               wait_for_ajax
 
@@ -301,11 +292,9 @@ describe "Order Details", type: :feature, js: true do
               product.master.stock_items.last.update_column(:backorderable, true)
 
               within_row(1) { click_icon 'arrows-h' }
-              targetted_select2 stock_location2.name, from: '#s2id_item_stock_location'
-              fill_in 'item_quantity', with: 2
-              click_icon :ok
+              complete_split_to(stock_location2, quantity: 2)
 
-              expect(page).to have_content("PENDING PACKAGE FROM 'CLARKSVILLE'")
+              expect(page).to have_content("pending package from 'Clarksville'")
 
               expect(order.shipments.count).to eq(1)
               expect(order.shipments.first.inventory_units_for(product.master).count).to eq(2)
@@ -321,8 +310,7 @@ describe "Order Details", type: :feature, js: true do
             expect(order.shipments.first.manifest.count).to eq(2)
 
             within_row(1) { click_icon 'arrows-h' }
-            targetted_select2 stock_location2.name, from: '#s2id_item_stock_location'
-            click_icon :ok
+            complete_split_to(stock_location2)
 
             expect(page).to have_css('.shipment', count: 2)
 
@@ -360,9 +348,7 @@ describe "Order Details", type: :feature, js: true do
           expect(order.shipments.count).to eq(2)
 
           within_row(1) { click_icon 'arrows-h' }
-          targetted_select2 @shipment2.number, from: '#s2id_item_stock_location'
-          fill_in 'item_quantity', with: 2
-          click_icon :ok
+          complete_split_to(@shipment2, quantity: 2)
 
           expect(page).not_to have_content(/Move .* to/)
 
@@ -380,17 +366,13 @@ describe "Order Details", type: :feature, js: true do
             expect(page).to have_css('.item-name', text: product.name, count: 1)
 
             within_row(1) { click_icon 'arrows-h' }
-            targetted_select2 @shipment2.number, from: '#s2id_item_stock_location'
-            fill_in 'item_quantity', with: 1
-            click_icon :ok
+            complete_split_to(@shipment2, quantity: 1)
 
             expect(page).to have_css('.item-name', text: product.name, count: 2)
 
             within(all('.stock-contents', count: 2).first) do
               within_row(1) { click_icon 'arrows-h' }
-              targetted_select2 @shipment2.number, from: '#s2id_item_stock_location'
-              fill_in 'item_quantity', with: 200
-              click_icon :ok
+              complete_split_to(@shipment2, quantity: 200)
             end
 
             wait_for_ajax
@@ -402,14 +384,11 @@ describe "Order Details", type: :feature, js: true do
 
           it 'should not allow a shipment to split stock to itself' do
             within_row(1) { click_icon 'arrows-h' }
-            targetted_select2 order.shipments.first.number, from: '#s2id_item_stock_location'
-            fill_in 'item_quantity', with: 1
-            click_icon :ok
-
-            wait_for_ajax
-
-            expect(order.shipments.count).to eq(2)
-            expect(order.shipments.first.inventory_units_for(product.master).count).to eq(2)
+            click_on 'Choose location'
+            within '.select2-results' do
+              expect(page).to have_content(@shipment2.number)
+              expect(page).not_to have_content(@shipment1.number)
+            end
           end
 
           it 'should split fine if more than one line_item is in the receiving shipment' do
@@ -417,10 +396,7 @@ describe "Order Details", type: :feature, js: true do
             order.contents.add(variant2, 2, shipment: @shipment2)
 
             within_row(1) { click_icon 'arrows-h' }
-            targetted_select2 @shipment2.number, from: '#s2id_item_stock_location'
-            fill_in 'item_quantity', with: 1
-
-            click_icon :ok
+            complete_split_to(@shipment2, quantity: 1)
 
             expect(page).not_to have_content(/Move .* to/)
             expect(page).to have_css('.shipment', count: 2)
@@ -440,17 +416,13 @@ describe "Order Details", type: :feature, js: true do
             expect(@shipment2.reload.backordered?).to eq(false)
 
             within_row(1) { click_icon 'arrows-h' }
-            targetted_select2 @shipment2.number, from: '#s2id_item_stock_location'
-            fill_in 'item_quantity', with: 1
-            click_icon :ok
+            complete_split_to(@shipment2, quantity: 1)
 
             expect(page).to have_content("1 x backordered")
 
             within('.stock-contents', text: "1 x on hand") do
               within_row(1) { click_icon 'arrows-h' }
-              targetted_select2 @shipment2.number, from: '#s2id_item_stock_location'
-              fill_in 'item_quantity', with: 1
-              click_icon :ok
+              complete_split_to(@shipment2, quantity: 1)
             end
 
             # Empty shipment should be removed
@@ -535,7 +507,7 @@ describe "Order Details", type: :feature, js: true do
       wait_for_ajax
 
       within '.carton-state' do
-        expect(page).to have_content('SHIPPED')
+        expect(page).to have_content('shipped')
       end
     end
   end

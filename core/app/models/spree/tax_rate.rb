@@ -1,14 +1,4 @@
 module Spree
-  class DefaultTaxZoneValidator < ActiveModel::Validator
-    def validate(record)
-      if record.included_in_price
-        record.errors.add(:included_in_price, Spree.t(:included_price_validation)) unless Zone.default_tax
-      end
-    end
-  end
-end
-
-module Spree
   class TaxRate < Spree::Base
     acts_as_paranoid
 
@@ -26,10 +16,11 @@ module Spree
 
     validates :amount, presence: true, numericality: true
     validates :tax_category_id, presence: true
-    validates_with DefaultTaxZoneValidator
 
     # Finds all tax rates whose zones match a given address
     scope :for_address, ->(address) { joins(:zone).merge(Spree::Zone.for_address(address)) }
+    scope :for_country,
+          ->(country) { for_address(Spree::Tax::TaxLocation.new(country: country)) }
 
     # Finds geographically matching tax rates for a tax zone.
     # We do not know if they are/aren't applicable until we attempt to apply these rates to
@@ -81,7 +72,7 @@ module Spree
     # @param [Spree::Zone] order_tax_zone is the smalles applicable zone to the order's tax address
     # @param [Array<Spree::LineItem,Spree::Shipment>] items to be adjusted
     def self.adjust(order_tax_zone, items)
-      ActiveSupport::Deprecation.warn("Please use Spree::Tax::OrderAdjuster or Spree::Tax::ItemAdjuster instead", caller)
+      Spree::Deprecation.warn("Please use Spree::Tax::OrderAdjuster or Spree::Tax::ItemAdjuster instead", caller)
       items.map do |item|
         Spree::Tax::ItemAdjuster.new(item, rates_for_order_zone: for_zone(order_tax_zone)).adjust!
       end

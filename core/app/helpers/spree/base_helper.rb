@@ -66,7 +66,7 @@ module Spree
       nil
     end
 
-    def breadcrumbs(taxon, separator = "&nbsp;&raquo;&nbsp;", breadcrumb_class = "inline")
+    def taxon_breadcrumbs(taxon, separator = "&nbsp;&raquo;&nbsp;", breadcrumb_class = "inline")
       return "" if current_page?("/") || taxon.nil?
 
       crumbs = [[Spree.t(:home), spree.root_path]]
@@ -126,7 +126,7 @@ module Spree
     end
 
     def display_price(product_or_variant)
-      product_or_variant.price_in(current_currency).display_price.to_html
+      product_or_variant.price_for(current_pricing_options).to_html
     end
 
     def pretty_time(time)
@@ -153,6 +153,10 @@ module Spree
       end
     end
 
+    def plural_resource_name(resource_class)
+      resource_class.model_name.human(count: Spree::I18N_GENERIC_PLURAL)
+    end
+
     private
 
     # Returns style of image or nil
@@ -170,7 +174,7 @@ module Spree
 
     def define_image_method(style)
       self.class.send :define_method, "#{style}_image" do |product, *options|
-        ActiveSupport::Deprecation.warn "Spree image helpers will be deprecated in the near future. Use the provided resource to access the intendend image directly.", caller
+        Spree::Deprecation.warn "Spree image helpers will be deprecated in the near future. Use the provided resource to access the intendend image directly.", caller
         options = options.first || {}
         if product.images.empty?
           if !product.is_a?(Spree::Variant) && !product.variant_images.empty?

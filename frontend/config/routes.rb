@@ -1,4 +1,4 @@
-Spree::Core::Engine.add_routes do
+Spree::Core::Engine.routes.draw do
   root to: 'home#index'
 
   resources :products, only: [:index, :show]
@@ -10,12 +10,7 @@ Spree::Core::Engine.add_routes do
   get '/checkout/:state', to: 'checkout#edit', as: :checkout_state
   get '/checkout', to: 'checkout#edit', as: :checkout
 
-  populate_redirect = redirect do |_params, request|
-    request.flash[:error] = Spree.t(:populate_get_error)
-    request.referer || '/cart'
-  end
-
-  get '/orders/populate', to: populate_redirect
+  get '/orders/populate', to: 'orders#populate_redirect'
   get '/orders/:id/token/:token' => 'orders#show', :as => :token_order
 
   resources :orders, except: [:index, :new, :create, :destroy] do

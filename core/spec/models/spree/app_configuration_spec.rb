@@ -20,6 +20,14 @@ describe Spree::AppConfiguration, type: :model do
     expect(prefs.variant_search_class).to eq Spree::Core::Search::Variant
   end
 
+  it "uses variant price selector class by default" do
+    expect(prefs.variant_price_selector_class).to eq Spree::Variant::PriceSelector
+  end
+
+  it "has a getter for the pricing options class provided by the variant price selector class" do
+    expect(prefs.pricing_options_class).to eq Spree::Variant::PriceSelector.pricing_options_class
+  end
+
   describe '#stock' do
     subject { prefs.stock }
     it { is_expected.to be_a Spree::Core::StockConfiguration }

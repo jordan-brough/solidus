@@ -1,4 +1,87 @@
+## Solidus 1.4.0 (master, unreleased)
+
+*   Update Rules::Taxon/Product handling of invalid match policies
+
+    Rules::Taxon and Rules::Product now require valid match_policy values.
+    Please ensure that all your Taxon and Product Rules have valid match_policy
+    values.
+
+*   Fix default value for Spree::Promotion::Rules::Taxon preferred_match_policy.
+
+    Previously this was defaulting to nil, which was sometimes interpreted as
+    'none'.
+
+*   Deprecate `Spree::Shipment#address` (column renamed)
+
+    `Spree::Shipment#address` was not actually being used for anything in
+    particular, so the association has been deprecated and delegated to
+    `Spree::Order#ship_address` instead. The database column has been renamed
+    `spree_shipments.deprecated_address_id`.
+
+    https://github.com/solidusio/solidus/pull/1138
+
+*   Coupon code application has been separated from the Continue button on the Payment checkout page
+
+    * JavaScript for it has been moved from address.js into its own `spree/frontend/checkout/coupon-code`
+    * Numerous small nuisances have been fixed [#1090](https://github.com/solidusio/solidus/pull/1090)
+
+*   Allow filtering orders by store when multiple stores are present. [#1149](https://github.com/solidusio/solidus/pull/1140)
+
+*   Remove unused `user_id` column from PromotionRule. [#1259](https://github.com/solidusio/solidus/pull/1259)
+
+*   Removed "Clear cache" button from the admin [#1275](https://github.com/solidusio/solidus/pull/1275)
+
 ## Solidus 1.3.0 (unreleased)
+
+*   Order now requires a `store_id` in validations
+
+    All orders created since Spree v2.4 should have a store assigned. A
+    migration exists to assign all orders without a store to the default store.
+
+    If you are seeing spec failures related to this, you may have to add
+    `let!(:store) { create(:store) }` to some test cases.
+
+*   Deprecate `Spree::TaxRate.adjust`, remove `Spree::TaxRate.match`
+
+    The functionality of `Spree::TaxRate.adjust` is now contained in the new
+    `Spree::Tax::OrderAdjuster` class.
+
+    Wherever you called `Spree::TaxRate.adjust(items, order_tax_zone)`, instead call
+    `Spree::Tax::OrderAdjuster.new(order).adjust!`.
+
+    `Spree::TaxRate.match` was an implementation detail of `Spree::TaxRate.adjust`. It has been
+    removed, and its functionality is now contained in the private method
+    `Spree::Tax::TaxHelpers#applicable_rates(order)`.
+
+*   Allow more options than `current_currency` to select prices
+
+    Previously, availability of products/variants, caching and pricing was dependent
+    only on a `current_currency` string. This has been changed to a `current_pricing_options`
+    object. For now, this object (`Spree::Variant::PricingOptions`) only holds the
+    currency. It is used for caching instead of the deprecated `current_currency` helper.
+
+    Additionally, your pricing can be customized using a `VariantPriceSelector` object, a default
+    implementation of which can be found in `Spree::Variant::PriceSelector`. It is responsible for
+    finding the right price for variant, be it for front-end display or for adding it to the
+    cart. You can set it through the new `Spree::Config.variant_price_selector_class` setting. This
+    class also knows which `PricingOptions` class it cooperates with.
+
+    #### Deprecated methods:
+
+    * `current_currency` helper
+    * `Spree::Variant#categorise_variants_from_option`
+    * `Spree::Variant#variants_and_option_values` (Use `Spree::Variant#variants_and_option_values#for` instead)
+    * `Spree::Core::Search::Base#current_currency`
+    * `Spree::Core::Search::Base#current_currency=`
+
+    #### Extracted Functionality:
+
+    There was a strange way of setting prices for line items depending on additional attributes
+    being present on the line item (`gift_wrap: true`, for example). It also needed
+    `Spree::Variant` to be patched with methods like `Spree::Variant#gift_wrap_price_modifier_in`
+    and is generally deemed a non-preferred way of modifying pricing.
+    This functionality has now been moved into a [Gem of its own](https://github.com/solidusio-contrib/solidus_price_modifier)
+    to ease the transition to the new `Variant::PriceSelector` system.
 
 *   Respect `Spree::Store#default_currency`
 
@@ -68,12 +151,6 @@
 
     https://github.com/solidusio/solidus/pull/965
 
-*   Made Spree::Order validate :store_id
-
-    All orders created since Spree v2.4 should have a store assigned. We want to build more
-    functionality onto that relation, so we need to make sure that every order has a store.
-    Please run `rake solidus:upgrade:one_point_three` to make sure your orders have a store id set.
-
 *   Removed Spree::Stock::Coordinator#packages from the public interface.
 
     This will allow us to refactor more easily.
@@ -120,6 +197,9 @@
     This version uses a rack middleware to determine the version, uses a
     different header name, and has some configuration changes.
 
+    You probably need to add [this](https://github.com/solidusio/solidus/commit/076f56f#diff-fd13b465e9d1fded7e03629bde800c9eR64)
+    to your controller specs.
+
     More information is available in the [VersionCake README](https://github.com/bwillis/versioncake)
 
 *   Bootstrap 4.0.0-alpha.2 is included into the admin.
@@ -135,6 +215,11 @@
     * Settings pages were grouped into related partials as outlined in [#634](https://github.com/solidusio/solidus/issues/634)
     * Partials are rendered on pages owned by the partials as tabs as a top bar
     * Admin-nav has a sub-menu for the settings now
+
+*   Lists of classes in configuration (`config.spree.calculators`, `spree.spree.calculators`, etc.) are
+    now stored internally as strings and constantized when accessed. This allows these classes to be
+    reloaded in development mode and loaded later in the boot process.
+    [#1203](https://github.com/solidusio/solidus/pull/1203)
 
 ## Solidus 1.2.0 (2016-01-26)
 

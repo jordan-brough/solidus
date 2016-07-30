@@ -43,7 +43,7 @@ RSpec.describe "Taxation system integration tests" do
   context 'selling from germany' do
     let(:germany) { create :country, iso: "DE" }
     # The weird default_tax boolean is what makes this context one with default included taxes
-    let!(:germany_zone) { create :zone, countries: [germany], default_tax: true }
+    let!(:germany_zone) { create :zone, countries: [germany] }
     let(:romania) { create(:country, iso: "RO") }
     let(:romania_zone) { create(:zone, countries: [romania] ) }
     let(:eu_zone) { create(:zone, countries: [romania, germany]) }
@@ -114,6 +114,7 @@ RSpec.describe "Taxation system integration tests" do
     end
 
     before do
+      Spree::Config.admin_vat_country_iso = "DE"
       order.contents.add(variant)
     end
 
@@ -310,7 +311,6 @@ RSpec.describe "Taxation system integration tests" do
         let(:variant) { download }
 
         it 'still has an adjusted price for romania' do
-          pending "waiting for the MOSS refactoring"
           expect(line_item.price).to eq(10.42)
         end
 
@@ -319,12 +319,10 @@ RSpec.describe "Taxation system integration tests" do
         end
 
         it 'has 2.02 of included tax' do
-          pending 'waiting for the MOSS refactoring'
           expect(line_item.included_tax_total).to eq(2.02)
         end
 
         it 'has a constant amount pre tax' do
-          pending 'but it changes to 8.06, because Spree thinks both VATs apply'
           expect(line_item.discounted_amount - line_item.included_tax_total).to eq(8.40)
         end
       end
@@ -334,19 +332,16 @@ RSpec.describe "Taxation system integration tests" do
 
         before { 2.times { order.next! } }
 
-        it 'it has a shipment with an adjusted price to 2.08' do
-          pending 'Waiting for the MOSS refactoring'
-          expect(shipment.amount).to eq(2.08)
+        it 'it has a shipment with worth 2.00' do
+          expect(shipment.amount).to eq(2.00)
         end
 
         it 'has a shipment with 0.40 included tax' do
-          pending 'But the tax is not created'
-          expect(shipment.included_tax_total).to eq(0.40)
+          expect(shipment.included_tax_total).to eq(0.39)
         end
 
         it 'has a shipping rate that correctly reflects the shipment' do
-          pending 'But the shipping rate is not adjusted'
-          expect(shipping_rate.display_price).to eq("$2.08 (incl. $0.40 Romanian VAT)")
+          expect(shipping_rate.display_price).to eq("$2.00 (incl. $0.39 Romanian VAT)")
         end
       end
     end
@@ -360,22 +355,18 @@ RSpec.describe "Taxation system integration tests" do
         let(:variant) { book }
 
         it 'should sell at the net price' do
-          pending "Prices have to be adjusted"
           expect(line_item.price).to eq(18.69)
         end
 
         it 'is adjusted to the net price' do
-          pending 'This will turn green when the default zone is gone'
           expect(line_item.total).to eq(18.69)
         end
 
         it 'has no tax adjustments' do
-          pending "Right now it gets a refund"
           expect(line_item.adjustments.tax.count).to eq(0)
         end
 
         it 'has no included tax' do
-          pending 'This will turn green when the default zone is gone'
           expect(line_item.included_tax_total).to eq(0)
         end
 
@@ -397,7 +388,6 @@ RSpec.describe "Taxation system integration tests" do
         let(:variant) { book }
 
         it 'should sell at the net price' do
-          pending "Prices have to be adjusted"
           expect(line_item.price).to eq(18.69)
         end
 
@@ -406,7 +396,6 @@ RSpec.describe "Taxation system integration tests" do
         end
 
         it 'has no tax adjustments' do
-          pending "Right now it gets a refund"
           expect(line_item.adjustments.tax.count).to eq(0)
         end
 
@@ -415,12 +404,10 @@ RSpec.describe "Taxation system integration tests" do
         end
 
         it 'has no additional tax' do
-          pending 'but there is a refund, still'
           expect(line_item.additional_tax_total).to eq(0)
         end
 
         it 'has a constant amount pre tax' do
-          pending 'But it has a discount that abuses the additional tax total'
           expect(line_item.discounted_amount - line_item.included_tax_total).to eq(18.69)
         end
 
@@ -429,9 +416,8 @@ RSpec.describe "Taxation system integration tests" do
 
           before { 2.times { order.next! } }
 
-          it 'it has a shipment with an adjusted price to 7.47' do
-            pending 'but prices are not adjusted yet'
-            expect(shipment.amount).to eq(7.47)
+          it 'it has a shipment that costs $8.00' do
+            expect(shipment.amount).to eq(8.00)
           end
 
           it 'has a shipment with no included tax' do
@@ -439,8 +425,7 @@ RSpec.describe "Taxation system integration tests" do
           end
 
           it 'has a shipping rate that correctly reflects the shipment' do
-            pending 'since no tax created, no correct display price'
-            expect(shipping_rate.display_price).to eq("$7.47")
+            expect(shipping_rate.display_price).to eq("$8.00")
           end
         end
       end
@@ -449,12 +434,10 @@ RSpec.describe "Taxation system integration tests" do
         let(:variant) { sweater }
 
         it 'should sell at the net price' do
-          pending 'but prices are not adjusted according to the zone yet'
           expect(line_item.price).to eq(25.21)
         end
 
         it 'has no tax adjustments' do
-          pending 'but it has a refund'
           expect(line_item.adjustments.tax.count).to eq(0)
         end
 
@@ -463,12 +446,10 @@ RSpec.describe "Taxation system integration tests" do
         end
 
         it 'has no additional tax' do
-          pending 'but it has a refund for included taxes wtf'
           expect(line_item.additional_tax_total).to eq(0)
         end
 
         it 'has a constant amount pre tax' do
-          pending 'But it has a discount that abuses the additional tax total'
           expect(line_item.discounted_amount - line_item.included_tax_total).to eq(25.21)
         end
 
@@ -477,9 +458,8 @@ RSpec.describe "Taxation system integration tests" do
 
           before { 2.times { order.next! } }
 
-          it 'it has a shipment with an adjusted price to 13.45' do
-            pending 'But prices are not adjusted yet'
-            expect(shipment.amount).to eq(13.45)
+          it 'it has a shipment costing $16.00' do
+            expect(shipment.amount).to eq(16.00)
           end
 
           it 'has a shipment with no included tax' do
@@ -487,8 +467,7 @@ RSpec.describe "Taxation system integration tests" do
           end
 
           it 'has a shipping rate that correctly reflects the shipment' do
-            pending 'since no tax created, no correct display price'
-            expect(shipping_rate.display_price).to eq("$13.45")
+            expect(shipping_rate.display_price).to eq("$16.00")
           end
         end
       end
@@ -497,12 +476,10 @@ RSpec.describe "Taxation system integration tests" do
         let(:variant) { download }
 
         it 'should sell at the net price' do
-          pending 'but prices are not adjusted yet'
           expect(line_item.price).to eq(8.40)
         end
 
         it 'has no tax adjustments' do
-          pending 'but a refund is created'
           expect(line_item.adjustments.tax.count).to eq(0)
         end
 
@@ -511,12 +488,10 @@ RSpec.describe "Taxation system integration tests" do
         end
 
         it 'has no additional tax' do
-          pending 'but an tax refund that disguises as additional tax is created'
           expect(line_item.additional_tax_total).to eq(0)
         end
 
         it 'has a constant amount pre tax' do
-          pending 'But it has a discount that abuses the additional tax total'
           expect(line_item.discounted_amount - line_item.included_tax_total).to eq(8.40)
         end
       end
@@ -526,9 +501,8 @@ RSpec.describe "Taxation system integration tests" do
 
         before { 2.times { order.next! } }
 
-        it 'it has a shipment with an adjusted price to 1.68' do
-          pending 'but prices are not adjusted yet'
-          expect(shipment.amount).to eq(1.68)
+        it 'it has a shipment costing 2.00' do
+          expect(shipment.amount).to eq(2.00)
         end
 
         it 'has a shipment with no included tax' do
@@ -536,8 +510,7 @@ RSpec.describe "Taxation system integration tests" do
         end
 
         it 'has a shipping rate that correctly reflects the shipment' do
-          pending 'since no tax created, no correct display price'
-          expect(shipping_rate.display_price).to eq("$1.68")
+          expect(shipping_rate.display_price).to eq("$2.00")
         end
       end
     end

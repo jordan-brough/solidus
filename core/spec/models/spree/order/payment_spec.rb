@@ -45,7 +45,6 @@ module Spree
       it "does not use failed payments" do
         payment_1 = create(:payment, amount: 50)
         payment_2 = create(:payment, amount: 50, state: 'failed')
-        allow(order).to receive(:pending_payments).and_return([payment_1])
 
         expect(payment_2).not_to receive(:process!)
 
@@ -84,7 +83,7 @@ module Spree
 
       # For the reason of this test, please see spree/spree_gateway#132
       it "keeps source attributes on assignment" do
-        ActiveSupport::Deprecation.silence do
+        Spree::Deprecation.silence do
           order.update_attributes(payments_attributes: [payment_attributes])
         end
         expect(order.unprocessed_payments.last.source.number).to be_present

@@ -1,6 +1,6 @@
-<% content_for :page_title do %>
-  <%= Spree::StockTransfer.model_name.human(count: :other) %>
-<% end %>
+<% admin_breadcrumb(link_to Spree.t(:stock), spree.admin_stock_items_path) %>
+<% admin_breadcrumb(plural_resource_name(Spree::StockTransfer)) %>
+
 
 <% content_for :page_actions do %>
   <% if can? :create, Spree::StockTransfer %>

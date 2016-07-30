@@ -1,8 +1,8 @@
 <%= render 'spree/admin/shared/general_tabs' %>
 
-<% content_for :page_title do %>
-  <%= Spree::Tracker.model_name.human(count: :other) %>
-<% end %>
+<% admin_breadcrumb(Spree.t(:settings)) %>
+<% admin_breadcrumb(Spree.t(:general_settings)) %>
+<% admin_breadcrumb(plural_resource_name(Spree::Tracker)) %>
 
 <% content_for :page_actions do %>
   <% if can?(:create, Spree::Tracker) %>

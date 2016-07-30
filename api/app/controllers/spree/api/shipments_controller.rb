@@ -1,11 +1,11 @@
 module Spree
   module Api
     class ShipmentsController < Spree::Api::BaseController
-      before_filter :find_order_on_create, only: :create
-      before_filter :find_shipment, only: [:update, :ship, :ready, :add, :remove]
+      before_action :find_order_on_create, only: :create
+      before_action :find_shipment, only: [:update, :ship, :ready, :add, :remove]
       before_action :load_transfer_params, only: [:transfer_to_location, :transfer_to_shipment]
-      around_filter :lock_order, except: [:mine]
-      before_filter :update_shipment, only: [:ship, :ready, :add, :remove]
+      around_action :lock_order, except: [:mine]
+      before_action :update_shipment, only: [:ship, :ready, :add, :remove]
 
       def mine
         if current_api_user
@@ -21,11 +21,6 @@ module Spree
       end
 
       def create
-        # TODO: Can remove conditional here once deprecated #find_order is removed.
-        unless @order.present?
-          @order = Spree::Order.find_by!(number: params[:shipment][:order_id])
-          authorize! :read, @order
-        end
         authorize! :create, Shipment
         quantity = params[:quantity].to_i
         @shipment = @order.shipments.create(stock_location_id: params.fetch(:stock_location_id))
