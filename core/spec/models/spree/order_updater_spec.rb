@@ -277,5 +277,32 @@ module Spree
         updater.update
       end
     end
+
+    describe 'updating in-memory items' do
+      let(:order) do
+        create(:order_with_line_items, line_items_count: 1, line_items_price: 10)
+      end
+
+      let!(:promotion) { create(:promotion, :with_line_item_adjustment, adjustment_rate: 1) }
+
+      before do
+        result = promotion.activate(order: order)
+        order.update!
+        order.reload
+      end
+
+      it 'updates in-memory items' do
+        line_item = order.line_items.to_a.first
+
+        expect(line_item.promo_total).to eq(-1)
+        expect(order.promo_total).to eq(-1)
+
+        promotion.actions.first!.calculator.update!(preferred_amount: 2)
+        order.update!
+
+        expect(line_item.promo_total).to eq(-2)
+        expect(order.promo_total).to eq(-2)
+      end
+    end
   end
 end
