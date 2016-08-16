@@ -104,8 +104,10 @@ module Spree
 
       specify do
         subject.merge!(order_2)
-        line_items = order_1.line_items.reload
-        expect(line_items.count).to eq(2)
+
+        # Both in memory and in DB line items
+        expect(order_1.line_items.length).to eq(2)
+        expect(order_1.line_items.count).to eq(2)
 
         expect(order_1.item_count).to eq 2
         expect(order_1.item_total).to eq line_items.map(&:amount).sum
