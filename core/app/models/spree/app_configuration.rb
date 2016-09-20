@@ -371,6 +371,16 @@ module Spree
       @add_payment_sources_to_wallet_class ||= Spree::Wallet::AddPaymentSourcesToWallet
     end
 
+    # Allows providing your own class for updating taxes on an order.
+    #
+    # @!attribute [rw] tax_updater_class
+    # @return [Class] a class with the same public interface as
+    #   Spree::TaxUpdater.
+    attr_writer :tax_updater_class
+    def tax_updater_class
+      @tax_updater_class ||= Spree::TaxUpdater
+    end
+
     def static_model_preferences
       @static_model_preferences ||= Spree::Preferences::StaticModelPreferences.new
     end
