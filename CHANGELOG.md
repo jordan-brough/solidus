@@ -1,5 +1,10 @@
 ## Solidus 2.1.0 (master, unreleased)
 
+*   Added Spree::Config.tax_adjuster_class
+
+    To allow easier customization of tax calculation in extensions or
+    applications.
+
 *   Remove `is_default` boolean from `Spree::Price` model
 
     This boolean used to mean "the price to be used". With the new
@@ -19,7 +24,7 @@
 *   Removals
 
     * Removed deprecated method `Spree::TaxRate.adjust` (not to be confused with
-      Spree::TaxRate#adjust) in favor of `Spree::Tax::OrderAdjuster`.
+      Spree::TaxRate#adjust) in favor of `Spree::Config.tax_adjuster_class`.
 
       https://github.com/solidusio/solidus/pull/1462
 
