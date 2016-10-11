@@ -68,10 +68,6 @@ module Spree
       true
     end
 
-    def actions
-      %w(capture void credit)
-    end
-
     private
 
     def generate_profile_id(success)

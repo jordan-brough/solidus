@@ -1,9 +1,5 @@
 module Spree
   class PaymentMethod::Check < PaymentMethod
-    def actions
-      %w{capture void}
-    end
-
     # Indicates whether its possible to capture the payment
     def can_capture?(payment)
       ['checkout', 'pending'].include?(payment.state)
