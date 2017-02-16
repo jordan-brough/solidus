@@ -37,7 +37,7 @@ describe Spree::CreditCard, type: :model do
     allow(@payment).to receive_messages payment_method: @payment_gateway
   end
 
-  context "#valid?" do
+  describe "#valid?" do
     it "should validate presence of number" do
       credit_card.attributes = valid_credit_card_attributes.except(:number)
       expect(credit_card).not_to be_valid
@@ -254,7 +254,7 @@ describe Spree::CreditCard, type: :model do
     end
   end
 
-  context "#to_active_merchant" do
+  describe "#to_active_merchant" do
     before do
       credit_card.number = "4111111111111111"
       credit_card.year = Time.current.year
