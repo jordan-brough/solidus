@@ -1,4 +1,4 @@
-## Solidus 2.1.0 (master, unreleased)
+## Solidus 2.1.0 (2017-01-17)
 
 *   The OrderUpdater (as used by `order.update!`) now fully updates taxes.
 
@@ -71,7 +71,7 @@
     For now `PromotionAction` provides a default remove_from method, with a
     deprecation warning that subclasses should define their own remove_from
     method.
-    
+
     [#1451](https://github.com/solidusio/solidus/pull/1451)
 
 *   Remove `is_default` boolean from `Spree::Price` model
