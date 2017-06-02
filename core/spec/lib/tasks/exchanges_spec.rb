@@ -28,7 +28,7 @@ describe "exchanges:charge_unreturned_items" do
     let(:return_item_2) { build(:exchange_return_item, inventory_unit: order.inventory_units.last) }
     let!(:rma) { create(:return_authorization, order: order, return_items: [return_item_1, return_item_2]) }
     let(:zone) { create(:zone, countries: [order.tax_address.country])}
-    let!(:tax_rate) { create(:tax_rate, zone: zone, tax_category: return_item_2.exchange_variant.tax_category) }
+    let!(:tax_rate) { create(:tax_rate, zone: zone, tax_categories: [return_item_2.exchange_variant.tax_category]) }
     before do
       rma.save!
       Spree::Shipment.last.ship!
@@ -46,7 +46,7 @@ describe "exchanges:charge_unreturned_items" do
     let(:return_item_2) { build(:exchange_return_item, inventory_unit: order.inventory_units.last) }
     let!(:rma) { create(:return_authorization, order: order, return_items: [return_item_1, return_item_2]) }
     let(:zone) { create(:zone, countries: [order.tax_address.country])}
-    let!(:tax_rate) { create(:tax_rate, zone: zone, tax_category: return_item_2.exchange_variant.tax_category) }
+    let!(:tax_rate) { create(:tax_rate, zone: zone, tax_categories: [return_item_2.exchange_variant.tax_category]) }
 
     before do
       rma.save!
