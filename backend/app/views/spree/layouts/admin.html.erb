@@ -27,7 +27,7 @@
           <div class="<%= 'with-sidebar ' if content_for?(:sidebar) %>" id="content" data-hook>
             <div class="row">
               <% if content_for?(:tabs) %>
-                <div class="col-xs-12">
+                <div class="col-xs-12" style="max-width: 100%;">
                   <%= yield :tabs %>
                 </div>
               <% end %>
