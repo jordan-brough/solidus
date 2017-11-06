@@ -33,6 +33,8 @@ module Spree
     scope :reverse_chronological, -> { order('coalesce(spree_shipments.shipped_at, spree_shipments.created_at) desc', id: :desc) }
     scope :by_store, ->(store) { joins(:order).merge(Spree::Order.by_store(store)) }
 
+    validates_presence_of :order
+
     # shipment state machine (see http://github.com/pluginaweek/state_machine/tree/master for details)
     state_machine initial: :pending, use_transactions: false do
       event :ready do
